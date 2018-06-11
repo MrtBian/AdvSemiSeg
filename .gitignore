@@ -14,3 +14,5 @@ result*
 # dataset
 dataset/VOC2012
 
+*.png
+

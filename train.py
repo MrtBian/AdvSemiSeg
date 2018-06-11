@@ -200,7 +200,7 @@ def main():
     # only copy the params that exist in current model (caffe-like)
     new_params = model.state_dict().copy()
     for name, param in new_params.items():
-        print name
+        print (name)
         if name in saved_state_dict and param.size() == saved_state_dict[name].size():
             new_params[name].copy_(saved_state_dict[name])
             print('copy {}'.format(name))
@@ -420,18 +420,18 @@ def main():
         print('iter = {0:8d}/{1:8d}, loss_seg = {2:.3f}, loss_adv_p = {3:.3f}, loss_D = {4:.3f}, loss_semi = {5:.3f}'.format(i_iter, args.num_steps, loss_seg_value, loss_adv_pred_value, loss_D_value, loss_semi_value))
 
         if i_iter >= args.num_steps-1:
-            print 'save model ...'
+            print ('save model ...')
             torch.save(model.state_dict(),osp.join(args.snapshot_dir, 'VOC_'+str(args.num_steps)+'.pth'))
             torch.save(model_D.state_dict(),osp.join(args.snapshot_dir, 'VOC_'+str(args.num_steps)+'_D.pth'))
             break
 
         if i_iter % args.save_pred_every == 0 and i_iter!=0:
-            print 'taking snapshot ...'
+            print ('taking snapshot ...')
             torch.save(model.state_dict(),osp.join(args.snapshot_dir, 'VOC_'+str(i_iter)+'.pth'))
             torch.save(model_D.state_dict(),osp.join(args.snapshot_dir, 'VOC_'+str(i_iter)+'_D.pth'))
 
     end = timeit.default_timer()
-    print end-start,'seconds'
+    print (end-start,'seconds')
 
 if __name__ == '__main__':
     main()
