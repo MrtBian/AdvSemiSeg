@@ -1,5 +1,5 @@
 import argparse
-# import cv2
+import cv2
 import torch
 import torch.nn as nn
 from torch.utils import data, model_zoo
@@ -203,7 +203,7 @@ def main():
         print (name)
         if name in saved_state_dict and param.size() == saved_state_dict[name].size():
             new_params[name].copy_(saved_state_dict[name])
-            print('copy {}'.format(name))
+            # print('copy {}'.format(name))
     model.load_state_dict(new_params)
 
 
@@ -246,7 +246,7 @@ def main():
             train_ids = pickle.load(open(args.partial_id))
             print('loading train ids from {}'.format(args.partial_id))
         else:
-            train_ids = range(train_dataset_size)
+            train_ids = list(range(train_dataset_size))#?
             np.random.shuffle(train_ids)
         
         pickle.dump(train_ids, open(osp.join(args.snapshot_dir, 'train_id.pkl'), 'wb'))
