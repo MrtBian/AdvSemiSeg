@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import collections
 import torch
 import torchvision
-import cv2
+# import cv2
 from torch.utils import data
 from PIL import Image
 
