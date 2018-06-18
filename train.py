@@ -31,7 +31,7 @@ start = timeit.default_timer()
 IMG_MEAN = np.array((104.00698793,116.66876762,122.67891434), dtype=np.float32)
 
 MODEL = 'DeepLab'
-BATCH_SIZE = 10
+BATCH_SIZE = 1
 ITER_SIZE = 1
 NUM_WORKERS = 4
 DATA_DIRECTORY = './dataset/VOC2012'
@@ -40,8 +40,9 @@ IGNORE_LABEL = 255
 INPUT_SIZE = '321,321'
 LEARNING_RATE = 2.5e-4
 MOMENTUM = 0.9
-NUM_CLASSES = 21
-NUM_STEPS = 20000
+# NUM_CLASSES = 21
+NUM_CLASSES = 2
+NUM_STEPS = 1000
 POWER = 0.9
 RANDOM_SEED = 1234
 RESTORE_FROM = 'http://vllab1.ucmerced.edu/~whung/adv-semi-seg/resnet101COCO-41f33a49.pth'
@@ -141,8 +142,11 @@ def loss_calc(pred, label, gpu):
     """
     # out shape batch_size x channels x h x w -> batch_size x channels x h x w
     # label shape h x w x 1 x batch_size  -> batch_size x 1 x h x w
+
     label = Variable(label.long()).cuda(gpu)
     criterion = CrossEntropy2d().cuda(gpu)
+    # label = Variable(label.long()).cpu()
+    # criterion = CrossEntropy2d().cpu()
 
     return criterion(pred, label)
 
@@ -176,6 +180,8 @@ def make_D_label(label, ignore_mask):
     D_label = np.ones(ignore_mask.shape)*label
     D_label[ignore_mask] = 255
     D_label = Variable(torch.FloatTensor(D_label)).cuda(args.gpu)
+    # D_label = Variable(torch.FloatTensor(D_label)).cpu()
+
 
     return D_label
 
@@ -185,7 +191,7 @@ def main():
     h, w = map(int, args.input_size.split(','))
     input_size = (h, w)
 
-    cudnn.enabled = True
+    cudnn.enabled = False
     gpu = args.gpu
 
     # create network
@@ -200,7 +206,7 @@ def main():
     # only copy the params that exist in current model (caffe-like)
     new_params = model.state_dict().copy()
     for name, param in new_params.items():
-        print (name)
+        # print (name)
         if name in saved_state_dict and param.size() == saved_state_dict[name].size():
             new_params[name].copy_(saved_state_dict[name])
             # print('copy {}'.format(name))
@@ -208,7 +214,7 @@ def main():
 
 
     model.train()
-    model.cuda(args.gpu)
+    model.cuda(gpu)
 
     cudnn.benchmark = True
 
@@ -217,7 +223,7 @@ def main():
     if args.restore_from_D is not None:
         model_D.load_state_dict(torch.load(args.restore_from_D))
     model_D.train()
-    model_D.cuda(args.gpu)
+    model_D.cuda(gpu)
 
 
     if not os.path.exists(args.snapshot_dir):
@@ -291,7 +297,7 @@ def main():
 
 
     for i_iter in range(args.num_steps):
-
+        print("Iter:",i_iter)
         loss_seg_value = 0
         loss_adv_pred_value = 0
         loss_D_value = 0
@@ -313,14 +319,16 @@ def main():
             # do semi first
             if args.lambda_semi > 0 and i_iter >= args.semi_start :
                 try:
-                    _, batch = trainloader_remain_iter.next()
+                    _, batch = next(trainloader_remain_iter)
                 except:
                     trainloader_remain_iter = enumerate(trainloader_remain)
-                    _, batch = trainloader_remain_iter.next()
+                    _, batch = next(trainloader_remain_iter)
 
                 # only access to img
                 images, _, _, _ = batch
-                images = Variable(images).cuda(args.gpu)
+
+                images = Variable(images).cuda(gpu)
+                # images = Variable(images).cpu()
 
 
                 pred = interp(model(images))
@@ -352,13 +360,16 @@ def main():
             # train with source
 
             try:
-                _, batch = trainloader_iter.next()
+                _, batch = next(trainloader_iter)
             except:
                 trainloader_iter = enumerate(trainloader)
-                _, batch = trainloader_iter.next()
+                _, batch = next(trainloader_iter)
 
             images, labels, _, _ = batch
-            images = Variable(images).cuda(args.gpu)
+
+            images = Variable(images).cuda(gpu)
+            # images = Variable(images).cpu()
+
             ignore_mask = (labels.numpy() == 255)
             pred = interp(model(images))
 
@@ -396,13 +407,14 @@ def main():
             # train with gt
             # get gt labels
             try:
-                _, batch = trainloader_gt_iter.next()
+                _, batch = next(trainloader_gt_iter)
             except:
                 trainloader_gt_iter = enumerate(trainloader_gt)
-                _, batch = trainloader_gt_iter.next()
+                _, batch = next(trainloader_gt_iter)
 
             _, labels_gt, _, _ = batch
             D_gt_v = Variable(one_hot(labels_gt)).cuda(args.gpu)
+            # D_gt_v = Variable(one_hot(labels_gt)).cpu()
             ignore_mask_gt = (labels_gt.numpy() == 255)
 
             D_out = interp(model_D(D_gt_v))

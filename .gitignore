@@ -13,6 +13,7 @@ result*
 
 # dataset
 dataset/VOC2012
+dataset/data
 
 *.png
 

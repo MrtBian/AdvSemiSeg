@@ -27,8 +27,10 @@ MODEL = 'DeepLab'
 DATA_DIRECTORY = './dataset/VOC2012'
 DATA_LIST_PATH = './dataset/voc_list/val.txt'
 IGNORE_LABEL = 255
-NUM_CLASSES = 21
-NUM_STEPS = 1449 # Number of images in the validation set.
+# NUM_CLASSES = 21
+NUM_CLASSES = 2
+# NUM_STEPS = 1449 # Number of images in the validation set.
+NUM_STEPS = 80 # Number of images in the validation set.
 RESTORE_FROM = 'http://vllab1.ucmerced.edu/~whung/adv-semi-seg/AdvSemiSegVOC0.125-8d75b3f1.pth'
 PRETRAINED_MODEL = None
 SAVE_DIRECTORY = 'results'
@@ -70,7 +72,7 @@ def get_arguments():
 
 class VOCColorize(object):
     def __init__(self, n=22):
-        self.cmap = color_map(22)
+        self.cmap = color_map(n)
         self.cmap = torch.from_numpy(self.cmap[:n])
 
     def __call__(self, gray_image):
@@ -178,7 +180,7 @@ def main():
     """Create the model and start the evaluation process."""
     args = get_arguments()
 
-    gpu0 = args.gpu
+    # gpu0 = args.gpu
 
     if not os.path.exists(args.save_dir):
         os.makedirs(args.save_dir)
@@ -196,7 +198,7 @@ def main():
     model.load_state_dict(saved_state_dict)
 
     model.eval()
-    model.cuda(gpu0)
+    # model.cuda(gpu0)
 
     testloader = data.DataLoader(VOCDataSet(args.data_dir, args.data_list, crop_size=(505, 505), mean=IMG_MEAN, scale=False, mirror=False), 
                                     batch_size=1, shuffle=False, pin_memory=True)
@@ -211,7 +213,8 @@ def main():
             print('%d processd'%(index))
         image, label, size, name = batch
         size = size[0].numpy()
-        output = model(Variable(image, volatile=True).cuda(gpu0))
+        # output = model(Variable(image, volatile=True).cuda(gpu0))
+        output = model(Variable(image, volatile=True).cpu())
         output = interp(output).cpu().data[0].numpy()
 
         output = output[:,:size[0],:size[1]]
