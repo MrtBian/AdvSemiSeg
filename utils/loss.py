@@ -3,6 +3,7 @@ import torch.nn.functional as F
 import torch.nn as nn
 from torch.autograd import Variable
 
+
 class CrossEntropy2d(nn.Module):
 
     def __init__(self, size_average=True, ignore_label=255):
@@ -30,7 +31,9 @@ class CrossEntropy2d(nn.Module):
         if not target.data.dim():
             return Variable(torch.zeros(1))
         predict = predict.transpose(1, 2).transpose(2, 3).contiguous()
+        # contiguous():返回一段内存连续的Tensor
         predict = predict[target_mask.view(n, h, w, 1).repeat(1, 1, 1, c)].view(-1, c)
+        # target [N] predict [N,C]
         loss = F.cross_entropy(predict, target, weight=weight, size_average=self.size_average)
         return loss
 
