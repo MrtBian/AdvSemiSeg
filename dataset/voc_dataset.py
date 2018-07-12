@@ -22,7 +22,7 @@ class VOCDataSet(data.Dataset):
         self.is_mirror = mirror
         self.img_ids = [i_id.strip() for i_id in open(list_path)]
         if not max_iters==None:
-	        self.img_ids = self.img_ids * int(np.ceil(float(max_iters) / len(self.img_ids)))
+            self.img_ids = self.img_ids * int(np.ceil(float(max_iters) / len(self.img_ids)))
         self.files = []
         # for split in ["train", "trainval", "val"]:
         for name in self.img_ids:
@@ -121,7 +121,8 @@ class VOCGTDataSet(data.Dataset):
         name = datafiles["name"]
 
         attempt = 0
-        while attempt < 10 :
+        #只切割图片，不填白
+        while attempt < 10:
             if self.scale:
                 image, label = self.generate_scale_label(image, label)
 

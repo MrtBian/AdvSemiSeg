@@ -187,7 +187,7 @@ def make_D_label(label, ignore_mask):
 
 
 def main():
-
+    # 将参数的input_size 映射到整数，并赋值，从字符串转换到整数二元组
     h, w = map(int, args.input_size.split(','))
     input_size = (h, w)
 
@@ -198,12 +198,14 @@ def main():
     model = Res_Deeplab(num_classes=args.num_classes)
 
     # load pretrained parameters
-    if args.restore_from[:4] == 'http' :
+    if args.restore_from[:4] == 'http':
         saved_state_dict = model_zoo.load_url(args.restore_from)
     else:
         saved_state_dict = torch.load(args.restore_from)
 
     # only copy the params that exist in current model (caffe-like)
+    #确保模型中参数的格式与要加载的参数相同
+    #返回一个字典，保存着module的所有状态（state）；parameters和persistent buffers都会包含在字典中，字典的key就是parameter和buffer的 names。
     new_params = model.state_dict().copy()
     for name, param in new_params.items():
         # print (name)
@@ -212,11 +214,11 @@ def main():
             # print('copy {}'.format(name))
     model.load_state_dict(new_params)
 
-
+    #设置为训练模式
     model.train()
-    model.cuda(gpu)
-
     cudnn.benchmark = True
+
+    model.cuda(gpu)
 
     # init D
     model_D = FCDiscriminator(num_classes=args.num_classes)
@@ -234,7 +236,6 @@ def main():
                     scale=args.random_scale, mirror=args.random_mirror, mean=IMG_MEAN)
 
     train_dataset_size = len(train_dataset)
-
     train_gt_dataset = VOCGTDataSet(args.data_dir, args.data_list, crop_size=input_size,
                        scale=args.random_scale, mirror=args.random_mirror, mean=IMG_MEAN)
 
@@ -255,7 +256,7 @@ def main():
             train_ids = list(range(train_dataset_size))#?
             np.random.shuffle(train_ids)
         
-        pickle.dump(train_ids, open(osp.join(args.snapshot_dir, 'train_id.pkl'), 'wb'))
+        pickle.dump(train_ids, open(osp.join(args.snapshot_dir, 'train_id.pkl'), 'wb'))#写入文件
 
         train_sampler = data.sampler.SubsetRandomSampler(train_ids[:partial_size])
         train_remain_sampler = data.sampler.SubsetRandomSampler(train_ids[partial_size:])
@@ -288,7 +289,7 @@ def main():
 
     # loss/ bilinear upsampling
     bce_loss = BCEWithLogitsLoss2d()
-    interp = nn.Upsample(size=(input_size[1], input_size[0]), mode='bilinear')
+    interp = nn.Upsample(size=(input_size[1], input_size[0]), mode='bilinear')#???
 
 
     # labels for adversarial training
