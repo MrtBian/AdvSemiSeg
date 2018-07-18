@@ -22,7 +22,9 @@ import numpy as np
 # c = a.ab()
 # print(a)
 a = np.array([[1, 2, 3], [2, 3, 4], [4, 5, 6]])
+c = np.array([1, 2, 3])
 a_mask = a >= 4
 b = a[a_mask]
 print(b.shape)
+print(c.shape)
 print(a_mask)
